@@ -1,0 +1,225 @@
+HTML
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic Tac Toe Web</title>
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .contenedor {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        /* Pantalla de Registro */
+        .grupo-input {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+        .grupo-input label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .grupo-input input {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #2c3e50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #1a252f;
+        }
+
+        /* Tablero de Juego */
+        .oculto {
+            display: none;
+        }
+        #marcador {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .tablero {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-gap: 5px;
+            justify-content: center;
+        }
+        .celda {
+            width: 100px;
+            height: 100px;
+            background-color: #ecf0f1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 48px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .celda:hover {
+            background-color: #bdc3c7;
+        }
+        .texto-azul { color: blue; }
+        .texto-rojo { color: red; }
+        .texto-verde { color: #27ae60; }
+    </style>
+</head>
+<body>
+
+    <div class="contenedor">
+        
+        <div id="pantalla-registro">
+            <h2>Registro de Jugadores</h2>
+            <div class="grupo-input">
+                <label>Jugador 1 (X - Azul):</label>
+                <input type="text" id="input-j1" placeholder="Ej. Ana">
+            </div>
+            <div class="grupo-input">
+                <label>Jugador 2 (O - Rojo):</label>
+                <input type="text" id="input-j2" placeholder="Ej. Carlos">
+            </div>
+            <button onclick="iniciarJuego()">Empezar a jugar</button>
+        </div>
+
+        <div id="pantalla-juego" class="oculto">
+            <div id="marcador">Jugador 1 (X) vs Jugador 2 (O)</div>
+            <div class="tablero" id="tablero">
+                <div class="celda" data-indice="0"></div>
+                <div class="celda" data-indice="1"></div>
+                <div class="celda" data-indice="2"></div>
+                <div class="celda" data-indice="3"></div>
+                <div class="celda" data-indice="4"></div>
+                <div class="celda" data-indice="5"></div>
+                <div class="celda" data-indice="6"></div>
+                <div class="celda" data-indice="7"></div>
+                <div class="celda" data-indice="8"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Variables globales equivalentes a las que teníamos en Python
+        let jugador1 = "";
+        let jugador2 = "";
+        let turno = "X";
+        let juegoActivo = false;
+        let estadoTablero = ["", "", "", "", "", "", "", "", ""]; // Representa las 9 celdas
+
+        // Elementos de la interfaz (para modificarlos fácilmente)
+        const marcador = document.getElementById('marcador');
+        const celdas = document.querySelectorAll('.celda');
+        const pantallaRegistro = document.getElementById('pantalla-registro');
+        const pantallaJuego = document.getElementById('pantalla-juego');
+
+        // Combinaciones ganadoras (filas, columnas, diagonales)
+        const combinacionesGanadoras = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8], // Filas
+            [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columnas
+            [0, 4, 8], [2, 4, 6]             // Diagonales
+        ];
+
+        function iniciarJuego() {
+            // 1. Obtener los nombres de los inputs
+            jugador1 = document.getElementById('input-j1').value || "Jugador 1";
+            jugador2 = document.getElementById('input-j2').value || "Jugador 2";
+
+            // 2. Ocultar registro y mostrar juego
+            pantallaRegistro.classList.add('oculto');
+            pantallaJuego.classList.remove('oculto');
+
+            // 3. Actualizar marcador
+            marcador.textContent = `${jugador1} (X)   vs   ${jugador2} (O)`;
+            juegoActivo = true;
+        }
+
+        function clicCelda(evento) {
+            // Obtener la celda a la que se le hizo clic y su índice
+            const celdaClickeada = evento.target;
+            const indiceCelda = parseInt(celdaClickeada.getAttribute('data-indice'));
+
+            // Si la celda ya tiene algo o el juego terminó, no hacemos nada
+            if (estadoTablero[indiceCelda] !== "" || !juegoActivo) {
+                return;
+            }
+
+            // Registrar la jugada en nuestra matriz y en la pantalla
+            estadoTablero[indiceCelda] = turno;
+            celdaClickeada.textContent = turno;
+
+            // Aplicar el color correspondiente
+            if (turno === "X") {
+                celdaClickeada.classList.add('texto-azul');
+            } else {
+                celdaClickeada.classList.add('texto-rojo');
+            }
+
+            verificarGanador();
+        }
+
+        function verificarGanador() {
+            let rondaGanada = false;
+
+            // Revisar cada combinación ganadora posible
+            for (let i = 0; i < combinacionesGanadoras.length; i++) {
+                const combinacion = combinacionesGanadoras[i];
+                let a = estadoTablero[combinacion[0]];
+                let b = estadoTablero[combinacion[1]];
+                let c = estadoTablero[combinacion[2]];
+
+                // Si hay algún espacio vacío en esa combinación, pasamos a la siguiente
+                if (a === "" || b === "" || c === "") {
+                    continue;
+                }
+
+                // Si los 3 son iguales, ¡alguien ganó!
+                if (a === b && b === c) {
+                    rondaGanada = true;
+                    break;
+                }
+            }
+
+            if (rondaGanada) {
+                // Anunciar al ganador
+                let nombreGanador = turno === "X" ? jugador1 : jugador2;
+                marcador.textContent = `'${nombreGanador}' ha ganado el juego`;
+                marcador.classList.add('texto-verde'); // Pintar de verde la victoria
+                juegoActivo = false; // Detener el juego
+                return;
+            }
+
+            // Cambiar de turno si nadie ha ganado
+            turno = turno === "X" ? "O" : "X";
+        }
+
+        // Conectar cada celda HTML con la función clicCelda en JavaScript
+        celdas.forEach(celda => celda.addEventListener('click', clicCelda));
+
+    </script>
+</body>
+</html>
