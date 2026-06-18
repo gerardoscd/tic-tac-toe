@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tic Tac Toe Web - by jerryscd</title>
+    <title>Tic Tac Toe Web</title>
     
     <style>
         body {
@@ -98,4 +98,174 @@
         .texto-azul { color: blue; }
         .texto-rojo { color: red; }
         .texto-verde { color: #27ae60; }
-        .texto-naranja { color: #e67
+        .texto-naranja { color: #e67e22; }
+        .texto-gris { color: #333333; }
+    </style>
+</head>
+<body>
+
+    <div class="contenedor">
+        
+        <div id="pantalla-registro">
+            <h2>Registro de Jugadores</h2>
+            <div class="grupo-input">
+                <label>Jugador 1 (X - Azul):</label>
+                <input type="text" id="input-j1" placeholder="Ej. Ana">
+            </div>
+            <div class="grupo-input">
+                <label>Jugador 2 (O - Rojo):</label>
+                <input type="text" id="input-j2" placeholder="Ej. Carlos">
+            </div>
+            <button onclick="iniciarJuego()">Empezar a jugar</button>
+        </div>
+
+        <div id="pantalla-juego" class="oculto">
+            <div id="marcador">Jugador 1 (X) vs Jugador 2 (O)</div>
+            <div id="etiqueta-turno" class="texto-azul">Ahora es el turno de: Jugador 1 (X)</div>
+            
+            <div class="tablero" id="tablero">
+                <div class="celda" data-indice="0"></div>
+                <div class="celda" data-indice="1"></div>
+                <div class="celda" data-indice="2"></div>
+                <div class="celda" data-indice="3"></div>
+                <div class="celda" data-indice="4"></div>
+                <div class="celda" data-indice="5"></div>
+                <div class="celda" data-indice="6"></div>
+                <div class="celda" data-indice="7"></div>
+                <div class="celda" data-indice="8"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let jugador1 = "";
+        let jugador2 = "";
+        let turno = "X";
+        let juegoActivo = false;
+        let estadoTablero = ["", "", "", "", "", "", "", "", ""];
+
+        const marcador = document.getElementById('marcador');
+        const etiquetaTurno = document.getElementById('etiqueta-turno');
+        const celdas = document.querySelectorAll('.celda');
+        const pantallaRegistro = document.getElementById('pantalla-registro');
+        const pantallaJuego = document.getElementById('pantalla-juego');
+
+        const combinacionesGanadoras = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8], 
+            [0, 3, 6], [1, 4, 7], [2, 5, 8], 
+            [0, 4, 8], [2, 4, 6]             
+        ];
+
+        function iniciarJuego() {
+            jugador1 = document.getElementById('input-j1').value || "Jugador 1";
+            jugador2 = document.getElementById('input-j2').value || "Jugador 2";
+
+            // Reiniciar variables lógicas por si es una partida nueva
+            estadoTablero = ["", "", "", "", "", "", "", "", ""];
+            turno = "X";
+            juegoActivo = true;
+
+            // Limpiar visualmente el tablero
+            celdas.forEach(celda => {
+                celda.textContent = "";
+                celda.className = "celda"; // Quita colores anteriores
+            });
+
+            // Configurar textos iniciales
+            marcador.textContent = `${jugador1} (X)   vs   ${jugador2} (O)`;
+            marcador.className = ""; // Limpiar colores de victoria/empate pasados
+            
+            etiquetaTurno.textContent = `Ahora es el turno de: ${jugador1} (X)`;
+            etiquetaTurno.className = "texto-azul";
+
+            // Cambiar de pantalla
+            pantallaRegistro.classList.add('oculto');
+            pantallaJuego.classList.remove('oculto');
+        }
+
+        function preguntarReinicio() {
+            // El confirm() de JavaScript es equivalente al messagebox de Python
+            let respuesta = confirm("Fin del juego. ¿Volver a empezar?");
+            if (respuesta) {
+                // Volver a la pantalla de registro
+                pantallaJuego.classList.add('oculto');
+                pantallaRegistro.classList.remove('oculto');
+            }
+        }
+
+        function verificarGanador() {
+            let rondaGanada = false;
+
+            // 1. Revisar si alguien ganó
+            for (let i = 0; i < combinacionesGanadoras.length; i++) {
+                const [a, b, c] = combinacionesGanadoras[i];
+                
+                if (estadoTablero[a] && estadoTablero[a] === estadoTablero[b] && estadoTablero[a] === estadoTablero[c]) {
+                    rondaGanada = true;
+                    break;
+                }
+            }
+
+            if (rondaGanada) {
+                let nombreGanador = turno === "X" ? jugador1 : jugador2;
+                marcador.textContent = `'${nombreGanador}' ha ganado el juego`;
+                marcador.className = "texto-verde";
+                etiquetaTurno.textContent = "¡Juego terminado!";
+                etiquetaTurno.className = "texto-gris";
+                juegoActivo = false;
+                
+                // Retrasamos la alerta 100 milisegundos para que la pantalla alcance a dibujar la última pieza
+                setTimeout(preguntarReinicio, 100);
+                return true;
+            }
+
+            // 2. Revisar empate (si no hay espacios vacíos en el tablero)
+            if (!estadoTablero.includes("")) {
+                marcador.textContent = "¡Es un empate!";
+                marcador.className = "texto-naranja";
+                etiquetaTurno.textContent = "Juego terminado sin ganador";
+                etiquetaTurno.className = "texto-gris";
+                juegoActivo = false;
+                
+                setTimeout(preguntarReinicio, 100);
+                return true;
+            }
+
+            return false;
+        }
+
+        function clicCelda(evento) {
+            const celdaClickeada = evento.target;
+            const indiceCelda = parseInt(celdaClickeada.getAttribute('data-indice'));
+
+            if (estadoTablero[indiceCelda] !== "" || !juegoActivo) {
+                return;
+            }
+
+            estadoTablero[indiceCelda] = turno;
+            celdaClickeada.textContent = turno;
+
+            if (turno === "X") {
+                celdaClickeada.classList.add('texto-azul');
+            } else {
+                celdaClickeada.classList.add('texto-rojo');
+            }
+
+            let juegoTerminado = verificarGanador();
+
+            // Si el juego no ha terminado, pasamos el turno
+            if (!juegoTerminado) {
+                turno = turno === "X" ? "O" : "X";
+                let siguienteJugador = turno === "X" ? jugador1 : jugador2;
+                let colorSiguiente = turno === "X" ? "texto-azul" : "texto-rojo";
+                
+                etiquetaTurno.textContent = `Ahora es el turno de: ${siguienteJugador} (${turno})`;
+                etiquetaTurno.className = colorSiguiente;
+            }
+        }
+
+        celdas.forEach(celda => celda.addEventListener('click', clicCelda));
+    </script>
+</body>
+</html>
